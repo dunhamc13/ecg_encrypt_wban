@@ -6,6 +6,8 @@ from tensorflow.keras import layers, losses
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Model
 
+#https://www.kaggle.com/devavratatripathy/ecg-dataset
+
 '''
    init()
    This is a temp function to check data structures.
