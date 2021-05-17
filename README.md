@@ -18,6 +18,7 @@ ECG_BinarySeq.py
    : Takes a local csv file with 140 columns of ECG data and computers the 
      fiducial points PQRST.
      Creates a file and writes a binary sequence based on fiducial points.
+ecg.csv dataset from https://www.kaggle.com/devavratatripathy/ecg-dataset
      
 ### Configurations
 Command Line Arguments:`
