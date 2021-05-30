@@ -11,6 +11,10 @@ python ECG_BinarySeq.py
                                 -> pip install tensorflow
                              -> if on mac using python3
                                 -> pip3 install tensorflow
+                  neurokit -> if on mac using python
+                           ->pip install neurokit2
+                  #not used py-ecg-detectors ->if on mac using python
+                            -> pip install py-ecg-detectors
 ### Runtime: PythonXX and .NET 5.0
 
 ### File Structure: 
