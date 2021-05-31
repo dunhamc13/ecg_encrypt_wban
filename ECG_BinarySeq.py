@@ -5,7 +5,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pprint
 #%matplotlib inline   //use this if in jupyter notebook
 #plt.rcParams['figure.figsize'] = [8,5]
 
@@ -88,7 +87,8 @@ def Get_ECG():
 def Get_R_Peaks(ecg_signal):
     # Extract R-peak locations from ecg signal file
     _, rpeaks = nk.ecg_peaks(ecg_signal, sampling_rate=3000)
-    pprint.pprint(rpeaks, width=1)
+    for key in rpeaks:
+        print(key, ' : ', rpeaks[key])
 
     # Visualize R-peaks in ECG signal **for Jupyter Notebook
     plot_Rpeak_Signal = nk.events_plot(rpeaks['ECG_R_Peaks'], ecg_signal)
@@ -160,8 +160,11 @@ def Get_R_Peaks(ecg_signal):
 '''
 def Get_TPQS_Peaks(ecg_signal,rpeaks):
     # Delineate ECG signal to get TPQS peaks
-    _, waves_peak = nk.ecg_delineate(ecg_signal, rpeaks, sampling_rate=3000)
-    pprint.pprint(waves_peak, width=1)
+    dwt_sig, waves_dwt_peak = nk.ecg_delineate(ecg_signal, rpeaks, sampling_rate=3000, method="dwt", show=True, show_type="all")
+    for key in waves_dwt_peak:
+        print(key, ' : ', waves_dwt_peak[key])
+    
+    def_sig, waves_peak = nk.ecg_delineate(ecg_signal, rpeaks, sampling_rate=3000, show_type="peaks")
 
     # Visualize the T-peaks, P-peaks, Q-peaks and S-peaks
     plot_TPQS_Signal = nk.events_plot([waves_peak['ECG_T_Peaks'],
@@ -186,8 +189,111 @@ def Get_TPQS_Peaks(ecg_signal,rpeaks):
 
     # Delineate the ECG signal and visualizing all T-peaks boundaries
     signal_peaj, waves_peak = nk.ecg_delineate(ecg_signal, rpeaks, sampling_rate=3000, show=True, show_type='bounds_T')
-    return waves_peak
+    for key in waves_peak:
+        if(key == 'ECG_Q_Peaks' or key =='ECG_S_Peaks'):
+           print(key, ' : ', waves_peak[key])
+    return waves_dwt_peak, waves_peak
+   
+
+'''
+   Get_DWT_Avg(dwt_waves)
+   This will get the average for dwt_waves
+   Argument:
+   Return: 
+'''
+def Get_DWT_Avg(dwt_waves, QS_peaks):
+    R_Onset = dwt_waves['ECG_R_Onsets']
+    avgRons = np.nanmean(R_Onset)
+    avgRons_int = int(avgRons)
+    print(avgRons)
+    R_Ofset = dwt_waves['ECG_R_Offsets']
+    avgRoff = np.nanmean(R_Ofset)
+    avgRoff_int = int(avgRoff)
+    print(avgRoff)
+    t_peak = dwt_waves['ECG_T_Peaks']
+    avgTpeak = np.nanmean(t_peak)
+    t_peak_int = int(avgTpeak)
+    print(avgTpeak)
+    t_ons = dwt_waves['ECG_T_Onsets']
+    avgTons = np.nanmean(t_ons)
+    t_ons_int = int(avgTons)
+    print(avgTons)
+    t_off = dwt_waves['ECG_T_Offsets']
+    avgToff = np.nanmean(t_off)
+    t_off_int = int(avgToff)
+    print(avgToff)
+    p_peak = dwt_waves['ECG_P_Peaks']
+    avgPpeak = np.nanmean(p_peak)
+    p_peak_int = int(avgPpeak)
+    print(avgPpeak)
+    p_ons = dwt_waves['ECG_P_Onsets']
+    avgPons = np.nanmean(p_ons)
+    p_ons_int = int(avgPons)
+    print(avgPons)
+    p_off = dwt_waves['ECG_P_Offsets']
+    avgPoff = np.nanmean(p_off)
+    p_off_int = int(avgPoff)
+    print(avgPoff)
+    q_peak = QS_peaks['ECG_Q_Peaks']
+    avgQpeak = np.nanmean(q_peak)
+    q_peak_int = int(avgQpeak)
+    print(avgQpeak)
+    s_peak = QS_peaks['ECG_S_Peaks']
+    avgSpeak = np.nanmean(s_peak)
+    s_peak_int = int(avgSpeak)
+    print(avgSpeak)
+    return s_peak_int, q_peak_int, p_off_int, p_ons_int, p_peak_int, t_off_int, t_ons_int, t_peak_int, avgRoff_int, avgRons_int
     
+'''
+   Get_rPeak_Avg(r_peaks)
+   This will get the average for dwt_waves
+   Argument:
+   Return: 
+'''
+def Get_rPeak_Avg(r_peaks):
+    rList = r_peaks.values()
+    avgR = 0
+    counter = 0
+    for x in rList:
+        for y in x:
+            avgR = avgR + y
+            counter = counter + 1
+    avgR = avgR / counter
+    avgR_int = int(avgR)
+    print(avgR)
+    return avgR_int
+    
+'''
+   Get_BinaryFeatures(rPeaks, waves_dwt_peak, waves_peak))
+   This is the main driver
+   Argument:
+   Return: 
+'''
+def Get_BinaryFeatures(rPeaks, waves_dwt_peak, waves_peak):
+    avgR = Get_rPeak_Avg(rPeaks)
+    avgSpeak, avgQpeak, avgPoff, avgPons, avgPpeak,avgToff, avgTons, avgTpeak, avgRoff, avgRons = Get_DWT_Avg(waves_dwt_peak, waves_peak)
+    dict = {"R_Peak" : avgR,"R_Onset": avgRons, "R_Offset": avgRoff, "T_Peak":avgTpeak, "T_Onset":avgTons,"T_Offset":avgToff, "P_Peak":avgPpeak,"P_Onset":avgPons, "P_Offset":avgPoff,"Q_Peak":avgQpeak,"S_Peak":avgSpeak}
+    return dict
+    
+'''
+   Get_meanRX(BF)
+   This function gets the mean RX
+   RX is  RR, RQ, RS, RP, RT
+   where RQ = R-Q...
+   Argument:
+   Return: 
+'''
+def Get_meanRX(Binary_Features):
+    meanRX = 0
+    r = Binary_Features["R_Peak"]
+    q = Binary_Features["Q_Peak"]
+    s = Binary_Features["S_Peak"]
+    p = Binary_Features["P_Peak"]
+    t = Binary_Features["T_Peak"]
+    r_bin = np.binary_repr(r, width=None)
+    print(r_bin)
+    return meanRX
+
    
 '''
    main()
@@ -199,7 +305,11 @@ def main():
     #Retrieve ecg data file
     ecg_signal = Get_ECG();
     rPeaks = Get_R_Peaks(ecg_signal)
-    waves_peak = Get_TPQS_Peaks(ecg_signal, rPeaks)
+    waves_dwt_peak, waves_peak = Get_TPQS_Peaks(ecg_signal, rPeaks)
+    BF = Get_BinaryFeatures(rPeaks, waves_dwt_peak, waves_peak)
+    for key in BF:
+        print(key, ' : ', BF[key])
+    meanRX = Get_meanRX(BF)
 
 if __name__ == '__main__':
     main()
