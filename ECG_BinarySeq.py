@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import math
 #%matplotlib inline   //use this if in jupyter notebook
 #plt.rcParams['figure.figsize'] = [8,5]
 
@@ -28,6 +29,9 @@ import pandas as pd
 '''
 def Get_ECG():
     # Retrieve ECG data from NeuroKit
+    print()
+    print()
+    print("========          Retrieving ECG Signal Data Set            ========")
     ecg_signal = nk.data(dataset="ecg_3000hz")['ECG']
     return ecg_signal
 
@@ -86,9 +90,11 @@ def Get_ECG():
 '''
 def Get_R_Peaks(ecg_signal):
     # Extract R-peak locations from ecg signal file
+    print("========          Retrieving R Peaks of QRS complex         ========")
     _, rpeaks = nk.ecg_peaks(ecg_signal, sampling_rate=3000)
     for key in rpeaks:
-        print(key, ' : ', rpeaks[key])
+        print(key, ' : ', print(rpeaks[key]))
+    print()
 
     # Visualize R-peaks in ECG signal **for Jupyter Notebook
     plot_Rpeak_Signal = nk.events_plot(rpeaks['ECG_R_Peaks'], ecg_signal)
@@ -160,6 +166,7 @@ def Get_R_Peaks(ecg_signal):
 '''
 def Get_TPQS_Peaks(ecg_signal,rpeaks):
     # Delineate ECG signal to get TPQS peaks
+    print("=======   Using DWT to retrieve TPQS Peaks and On/Offsets   ========")
     dwt_sig, waves_dwt_peak = nk.ecg_delineate(ecg_signal, rpeaks, sampling_rate=3000, method="dwt", show=True, show_type="all")
     for key in waves_dwt_peak:
         print(key, ' : ', waves_dwt_peak[key])
@@ -192,6 +199,7 @@ def Get_TPQS_Peaks(ecg_signal,rpeaks):
     for key in waves_peak:
         if(key == 'ECG_Q_Peaks' or key =='ECG_S_Peaks'):
            print(key, ' : ', waves_peak[key])
+    print()
     return waves_dwt_peak, waves_peak
    
 
@@ -202,46 +210,46 @@ def Get_TPQS_Peaks(ecg_signal,rpeaks):
    Return: 
 '''
 def Get_DWT_Avg(dwt_waves, QS_peaks):
+    print("=======               Getting Mean of RX                     =======")
     R_Onset = dwt_waves['ECG_R_Onsets']
     avgRons = np.nanmean(R_Onset)
     avgRons_int = int(avgRons)
-    print(avgRons)
+    
     R_Ofset = dwt_waves['ECG_R_Offsets']
     avgRoff = np.nanmean(R_Ofset)
     avgRoff_int = int(avgRoff)
-    print(avgRoff)
+    
     t_peak = dwt_waves['ECG_T_Peaks']
     avgTpeak = np.nanmean(t_peak)
     t_peak_int = int(avgTpeak)
-    print(avgTpeak)
+    
     t_ons = dwt_waves['ECG_T_Onsets']
     avgTons = np.nanmean(t_ons)
     t_ons_int = int(avgTons)
-    print(avgTons)
+    
     t_off = dwt_waves['ECG_T_Offsets']
     avgToff = np.nanmean(t_off)
     t_off_int = int(avgToff)
-    print(avgToff)
+    
     p_peak = dwt_waves['ECG_P_Peaks']
     avgPpeak = np.nanmean(p_peak)
     p_peak_int = int(avgPpeak)
-    print(avgPpeak)
+    
     p_ons = dwt_waves['ECG_P_Onsets']
     avgPons = np.nanmean(p_ons)
     p_ons_int = int(avgPons)
-    print(avgPons)
+    
     p_off = dwt_waves['ECG_P_Offsets']
     avgPoff = np.nanmean(p_off)
     p_off_int = int(avgPoff)
-    print(avgPoff)
+    
     q_peak = QS_peaks['ECG_Q_Peaks']
     avgQpeak = np.nanmean(q_peak)
     q_peak_int = int(avgQpeak)
-    print(avgQpeak)
+    
     s_peak = QS_peaks['ECG_S_Peaks']
     avgSpeak = np.nanmean(s_peak)
     s_peak_int = int(avgSpeak)
-    print(avgSpeak)
     return s_peak_int, q_peak_int, p_off_int, p_ons_int, p_peak_int, t_off_int, t_ons_int, t_peak_int, avgRoff_int, avgRons_int
     
 '''
@@ -260,9 +268,31 @@ def Get_rPeak_Avg(r_peaks):
             counter = counter + 1
     avgR = avgR / counter
     avgR_int = int(avgR)
-    print(avgR)
     return avgR_int
     
+'''
+   Get_rPeak_STD(r_peaks)
+   This will get the std for dwt_waves
+   Argument:
+   Return: 
+'''
+def Get_rPeak_STD(r_peaks):
+    rList = r_peaks.values()
+    avgR = 0
+    length = 0
+    for x in rList:
+        for y in x:
+            length = length + 1
+
+    arr = np.empty([1,length])
+    for i in rList:
+        index = 0
+        for j in i:
+            arr[0,index] = j
+            index = index + 1
+    std = np.std(arr)
+    abs_log2_std = int(abs(math.log2(std)))
+    return abs_log2_std
 '''
    Get_BinaryFeatures(rPeaks, waves_dwt_peak, waves_peak))
    This is the main driver
@@ -270,11 +300,39 @@ def Get_rPeak_Avg(r_peaks):
    Return: 
 '''
 def Get_BinaryFeatures(rPeaks, waves_dwt_peak, waves_peak):
+    print("======= Creating Dictionaries of Mean / STD Binary Features ========")
     avgR = Get_rPeak_Avg(rPeaks)
+    stdR = Get_rPeak_STD(rPeaks)
     avgSpeak, avgQpeak, avgPoff, avgPons, avgPpeak,avgToff, avgTons, avgTpeak, avgRoff, avgRons = Get_DWT_Avg(waves_dwt_peak, waves_peak)
-    dict = {"R_Peak" : avgR,"R_Onset": avgRons, "R_Offset": avgRoff, "T_Peak":avgTpeak, "T_Onset":avgTons,"T_Offset":avgToff, "P_Peak":avgPpeak,"P_Onset":avgPons, "P_Offset":avgPoff,"Q_Peak":avgQpeak,"S_Peak":avgSpeak}
-    return dict
-    
+    stdSpeak, stdQpeak, stdPoff, stdPons, stdPpeak, stdToff, stdTons, stdTpeak, stdRoff, stdRons = Get_stdRX(waves_dwt_peak, waves_peak)
+    dictMean = {"R_Peak" : avgR,"R_Onset": avgRons, "R_Offset": avgRoff, "T_Peak":avgTpeak, "T_Onset":avgTons,"T_Offset":avgToff, "P_Peak":avgPpeak,"P_Onset":avgPons, "P_Offset":avgPoff,"Q_Peak":avgQpeak,"S_Peak":avgSpeak}
+    dictSTD = {"R_Peak" : stdR,"R_Onset": stdRons, "R_Offset": stdRoff, "T_Peak":stdTpeak, "T_Onset":stdTons,"T_Offset":stdToff, "P_Peak":stdPpeak,"P_Onset":stdPons, "P_Offset":stdPoff,"Q_Peak":stdQpeak,"S_Peak":stdSpeak}
+    return dictMean, dictSTD
+ 
+'''
+   exctract_K_Bits(num, k, p)
+   takes in RX num
+   converts to binary
+   drops the least significant bit for best matching
+   returns only the std of RX in binary
+   Thanks to geeksforgreeks for algorithm
+'''
+def extract_K_Bits(num,k,p):
+  
+     # convert number into binary first
+     binaryNum = bin(num)
+  
+     # remove first two characters
+     binaryNum = binaryNum[2:]
+  
+     end = len(binaryNum) - p
+     start = end - k + 1
+  
+     # extract k  bit sub-string
+     kBit_SubString = binaryNum[start : end+1]
+  
+     # convert extracted sub-string into decimal again
+     return kBit_SubString
 '''
    Get_meanRX(BF)
    This function gets the mean RX
@@ -283,18 +341,116 @@ def Get_BinaryFeatures(rPeaks, waves_dwt_peak, waves_peak):
    Argument:
    Return: 
 '''
-def Get_meanRX(Binary_Features):
-    meanRX = 0
+def Get_meanRX(Binary_Features, std):
+    print("=======                  Retrieving Mean BF                  =======")
+    
+    #Get the average Peaks
     r = Binary_Features["R_Peak"]
+    rSTD = std["R_Peak"]
     q = Binary_Features["Q_Peak"]
+    qSTD = std["Q_Peak"]
     s = Binary_Features["S_Peak"]
+    sSTD = std["S_Peak"]
     p = Binary_Features["P_Peak"]
+    pSTD = std["P_Peak"]
     t = Binary_Features["T_Peak"]
-    r_bin = np.binary_repr(r, width=None)
-    print(r_bin)
+    tSTD = std["T_Peak"]
+
+    #Get the average On/Offsets
+    ro = Binary_Features["R_Onset"]
+    roSTD = std["R_Onset"]
+    rof = Binary_Features["R_Offset"]
+    rofSTD = std["R_Offset"]
+    po = Binary_Features["P_Onset"]
+    poSTD = std["P_Onset"]
+    pof = Binary_Features["P_Offset"]
+    pofSTD = std["P_Offset"]
+    to = Binary_Features["T_Onset"]
+    toSTD = std["T_Onset"]
+    tof = Binary_Features["T_Offset"]
+    tofSTD = std["T_Offset"]
+
+    #Create Binary Features
+    RR = r
+    Rro = r - ro
+    Rrof = r + r - rof
+    RQ = r - q
+    RS = r + r - s
+    RP = r - p
+    Rpo = r - po
+    Rpof = r - pof
+    RT = r - t
+    Rto = r - to
+    Rtof = r - tof
+    
+    #Remove the least significant bit, only use abs log2 std to int bits
+    rr_bin = extract_K_Bits(RR,rSTD,2)
+    rro_bin = extract_K_Bits(Rro,roSTD,2)
+    rrof_bin = extract_K_Bits(Rrof,rofSTD,2)
+    rq_bin = extract_K_Bits(RQ,qSTD,2)
+    rs_bin = extract_K_Bits(RS,sSTD,2)
+    rp_bin = extract_K_Bits(RP,pSTD,2)
+    rpo_bin = extract_K_Bits(Rpo,poSTD,2)
+    rpof_bin = extract_K_Bits(Rpof,pofSTD,2)
+    rt_bin = extract_K_Bits(RT,tSTD,2)
+    rto_bin = extract_K_Bits(Rto,toSTD,2)
+    rtof_bin = extract_K_Bits(Rtof,tofSTD,2)
+
+    #concatenate the bits
+    meanRX = rr_bin + rro_bin + rrof_bin + rq_bin + rs_bin + rp_bin + rpo_bin + rpof_bin + rt_bin + rto_bin + rtof_bin
     return meanRX
 
-   
+'''
+   Get_stdRX(BF)
+   This function gets the std of RX
+   RX is  RR, RQ, RS, RP, RT
+   where RQ = R-Q...
+   Argument:
+   Return: 
+'''
+def Get_stdRX(dwt_waves,QS_Peaks):
+    print("=======           Getting Standard Deviation of BF           =======")
+    R_Onset = dwt_waves['ECG_R_Onsets']
+    stdRons = np.nanstd(R_Onset)
+    stdRons_int = int(abs(math.log2(stdRons)))
+    
+    R_Ofset = dwt_waves['ECG_R_Offsets']
+    stdRoff = np.nanstd(R_Ofset)
+    stdRoff_int = int(abs(math.log2(stdRoff)))
+    
+    t_peak = dwt_waves['ECG_T_Peaks']
+    stdTpeak = np.nanstd(t_peak)
+    stdt_peak_int = int(abs(math.log2(stdTpeak)))
+    
+    t_ons = dwt_waves['ECG_T_Onsets']
+    stdTons = np.nanstd(t_ons)
+    stdt_ons_int = int(abs(math.log2(stdTons)))
+    
+    t_off = dwt_waves['ECG_T_Offsets']
+    stdToff = np.nanstd(t_off)
+    stdt_off_int = int(abs(math.log2(stdToff)))
+    
+    p_peak = dwt_waves['ECG_P_Peaks']
+    stdPpeak = np.nanstd(p_peak)
+    stdp_peak_int = int(abs(math.log2(stdPpeak)))
+    
+    p_ons = dwt_waves['ECG_P_Onsets']
+    stdPons = np.nanstd(p_ons)
+    stdp_ons_int = int(abs(math.log2(stdPons)))
+    
+    p_off = dwt_waves['ECG_P_Offsets']
+    stdPoff = np.nanstd(p_off)
+    stdp_off_int = int(abs(math.log2(stdPoff)))
+    
+    q_peak = QS_Peaks['ECG_Q_Peaks']
+    stdQpeak = np.nanstd(q_peak)
+    stdq_peak_int = int(abs(math.log2(stdQpeak)))
+    
+    s_peak = QS_Peaks['ECG_S_Peaks']
+    stdSpeak = np.nanstd(s_peak)
+    stds_peak_int = int(abs(math.log2(stdSpeak)))
+    return stds_peak_int, stdq_peak_int, stdp_off_int, stdp_ons_int, stdp_peak_int, stdt_off_int, stdt_ons_int, stdt_peak_int, stdRoff_int, stdRons_int
+
 '''
    main()
    This is the main driver
@@ -304,12 +460,35 @@ def Get_meanRX(Binary_Features):
 def main():
     #Retrieve ecg data file
     ecg_signal = Get_ECG();
+
+    #Get the R Peaks
     rPeaks = Get_R_Peaks(ecg_signal)
+
+    #Use DWT to get TPQS peaks and all On/Offsets
     waves_dwt_peak, waves_peak = Get_TPQS_Peaks(ecg_signal, rPeaks)
-    BF = Get_BinaryFeatures(rPeaks, waves_dwt_peak, waves_peak)
+
+    #Get the Mean, Absolut Value * Log2 of STD rounded to Int for each BF
+    BF, stdBF = Get_BinaryFeatures(rPeaks, waves_dwt_peak, waves_peak)
+
+    #Print values
+    print("Returning Dictionaries with means and stds")
     for key in BF:
-        print(key, ' : ', BF[key])
-    meanRX = Get_meanRX(BF)
+        print(key, ' Mean : ', BF[key])
+    print()
+    for key in stdBF:
+        print(key, ' ABS LOG2 STD as INT : ', stdBF[key])
+    print()
+
+    #Make meanRX of BF to begin making BS
+    meanRX = Get_meanRX(BF,stdBF)
+    print("The meanRX is: " + meanRX)
+    print("The length of meanRX is: ", end ='')
+    print(len(meanRX))
+    print()
+
+    #Now make BSx...n
+    RX = getRX(rPeaks, waves_dwt_peak, waves_peak)
+
 
 if __name__ == '__main__':
     main()
