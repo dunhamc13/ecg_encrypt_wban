@@ -93,7 +93,7 @@ def Get_R_Peaks(ecg_signal):
     print("========          Retrieving R Peaks of QRS complex         ========")
     _, rpeaks = nk.ecg_peaks(ecg_signal, sampling_rate=3000)
     for key in rpeaks:
-        print(key, ' : ', print(rpeaks[key]))
+        print(key, ' : ', rpeaks[key])
     print()
 
     # Visualize R-peaks in ECG signal **for Jupyter Notebook
@@ -395,7 +395,8 @@ def Get_meanRX(Binary_Features, std):
     rt_bin = extract_K_Bits(RT,tSTD,2)
     rto_bin = extract_K_Bits(Rto,toSTD,2)
     rtof_bin = extract_K_Bits(Rtof,tofSTD,2)
-
+    
+    print(type(rr_bin))
     #concatenate the bits
     meanRX = rr_bin + rro_bin + rrof_bin + rq_bin + rs_bin + rp_bin + rpo_bin + rpof_bin + rt_bin + rto_bin + rtof_bin
     return meanRX
@@ -451,6 +452,165 @@ def Get_stdRX(dwt_waves,QS_Peaks):
     stds_peak_int = int(abs(math.log2(stdSpeak)))
     return stds_peak_int, stdq_peak_int, stdp_off_int, stdp_ons_int, stdp_peak_int, stdt_off_int, stdt_ons_int, stdt_peak_int, stdRoff_int, stdRons_int
 
+
+
+'''
+   Get_RXi(BF,std)
+   This function gets the mean RX
+   RX is  RR, RQ, RS, RP, RT
+   where RQ = R-Q...
+   Argument:
+   Return: 
+'''
+def Get_RXi(Binary_Features, std, meanRX):
+    print("=======                  Retrieving Mean BF                  =======")
+    
+    #Get the average Peaks
+    r = Binary_Features["R_Peak"]
+    rSTD = std["R_Peak"]
+    q = Binary_Features["Q_Peak"]
+    qSTD = std["Q_Peak"]
+    s = Binary_Features["S_Peak"]
+    sSTD = std["S_Peak"]
+    p = Binary_Features["P_Peak"]
+    pSTD = std["P_Peak"]
+    t = Binary_Features["T_Peak"]
+    tSTD = std["T_Peak"]
+
+    #Get the average On/Offsets
+    ro = Binary_Features["R_Onset"]
+    roSTD = std["R_Onset"]
+    rof = Binary_Features["R_Offset"]
+    rofSTD = std["R_Offset"]
+    po = Binary_Features["P_Onset"]
+    poSTD = std["P_Onset"]
+    pof = Binary_Features["P_Offset"]
+    pofSTD = std["P_Offset"]
+    to = Binary_Features["T_Onset"]
+    toSTD = std["T_Onset"]
+    tof = Binary_Features["T_Offset"]
+    tofSTD = std["T_Offset"]
+
+    #Create Binary Features
+    RR = r
+    Rro = r - ro
+    Rrof = r + r - rof
+    RQ = r - q
+    RS = r + r - s
+    RP = r - p
+    Rpo = r - po
+    Rpof = r - pof
+    RT = r - t
+    Rto = r - to
+    Rtof = r - tof
+    
+    #Remove the least significant bit, only use abs log2 std to int bits
+    rr_bin = extract_K_Bits(RR,rSTD,2)
+    rro_bin = extract_K_Bits(Rro,roSTD,2)
+    rrof_bin = extract_K_Bits(Rrof,rofSTD,2)
+    rq_bin = extract_K_Bits(RQ,qSTD,2)
+    rs_bin = extract_K_Bits(RS,sSTD,2)
+    rp_bin = extract_K_Bits(RP,pSTD,2)
+    rpo_bin = extract_K_Bits(Rpo,poSTD,2)
+    rpof_bin = extract_K_Bits(Rpof,pofSTD,2)
+    rt_bin = extract_K_Bits(RT,tSTD,2)
+    rto_bin = extract_K_Bits(Rto,toSTD,2)
+    rtof_bin = extract_K_Bits(Rtof,tofSTD,2)
+
+    #concatenate the bits
+    RXi_Str = rr_bin + rro_bin + rrof_bin + rq_bin + rs_bin + rp_bin + rpo_bin + rpof_bin + rt_bin + rto_bin + rtof_bin
+    return RXi_Str
+
+'''
+   Get_rPeak(r_peaks)
+   This will get the r peak of a wave for RX
+   Argument:
+   Return: 
+'''
+def Get_rPeak(r_peaks,BF,idx):
+    rList = r_peaks.values()
+    avgR = 0
+    length = 0
+    for x in rList:
+        for y in x:
+            avgR = avgR + y
+            length = length + 1
+    arr = np.empty([1,length])
+    for i in rList:
+        index = 0
+        for j in i:
+            arr[0,index] = j
+            index = index + 1
+    rpeak = int(arr[0,idx])
+    rMean = BF["R_Peak"]
+    rpeak = rpeak - rMean
+    return rpeak
+
+'''
+   Get_DWTs(dwt_waves,i)
+   This will get the average for dwt_waves
+   Argument:
+   Return: 
+'''
+def Get_DWTs(dwt_waves, QS_peaks,BF, i):
+    print("=======                 Getting RXi                          =======")
+    R_Onset = dwt_waves['ECG_R_Onsets']
+    RonsMean = BF["R_Onset"]
+    Rons = abs(int(R_Onset[i]) - RonsMean)
+    
+    R_Ofset = dwt_waves['ECG_R_Offsets']
+    roffMean = BF["R_Offset"]
+    Roff = abs(int(R_Ofset[i]) - roffMean)
+    
+    t_peak = dwt_waves['ECG_T_Peaks']
+    tPmean = BF["T_Peak"]
+    Tpeak = abs(int(t_peak[i]) - tPmean)
+    
+    t_ons = dwt_waves['ECG_T_Onsets']
+    tonsMean = BF["T_Onset"]
+    Tons = abs(int(t_ons[i]) - tonsMean)
+    
+    t_off = dwt_waves['ECG_T_Offsets']
+    toffMean = BF["T_Offset"]
+    Toff = abs(int(t_off[i]) - toffMean)
+    
+    p_peak = dwt_waves['ECG_P_Peaks']
+    pmean = BF["P_Peak"]
+    Ppeak = abs(int(p_peak[i]) - pmean)
+    
+    p_ons = dwt_waves['ECG_P_Onsets']
+    ponsMean = BF["P_Onset"]
+    Pons = abs(int(p_ons[i]) - ponsMean)
+    
+    p_off = dwt_waves['ECG_P_Offsets']
+    poffMean = BF["P_Offset"]
+    Poff = abs(int(p_off[i]) - poffMean)
+    
+    q_peak = QS_peaks['ECG_Q_Peaks']
+    qpMean = BF["Q_Peak"]
+    Qpeak = abs(int(q_peak[i]) - qpMean)
+    
+    s_peak = QS_peaks['ECG_S_Peaks']
+    spMean = BF["S_Peak"]
+    Speak = abs(int(s_peak[i]) - spMean)
+    return Speak, Qpeak, Poff, Pons, Ppeak, Toff, Tons, Tpeak, Roff, Rons
+    
+
+'''
+   Get_RX(rPeaks, waves_dwt_peak, waves_peak))
+   This reaturns a single RX
+   Argument:
+   Return: 
+'''
+def Get_RX(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, i):
+    print("=======                   Getting RX                        ========")
+    Ri = Get_rPeak(rPeaks,BF, i)
+    Speak, Qpeak, Poff, Pons, Ppeak, Toff, Tons, Tpeak, Roff, Rons = Get_DWTs(waves_dwt_peak, waves_peak,BF, i)
+    dictRX = {"R_Peak" : Ri,"R_Onset": Rons, "R_Offset": Roff, "T_Peak":Tpeak, "T_Onset":Tons,"T_Offset":Toff, "P_Peak":Ppeak,"P_Onset":Pons, "P_Offset":Poff,"Q_Peak":Qpeak,"S_Peak":Speak}
+    RXi = Get_RXi(dictRX, stdBF, meanRX)
+    return RXi
+ 
+
 '''
    main()
    This is the main driver
@@ -484,11 +644,40 @@ def main():
     print("The meanRX is: " + meanRX)
     print("The length of meanRX is: ", end ='')
     print(len(meanRX))
-    print()
 
     #Now make BSx...n
-    RX = getRX(rPeaks, waves_dwt_peak, waves_peak)
-
+    twofiftysix = 0;
+    signal = 1
+    BS = ''
+    while twofiftysix < 258:
+       RXi = Get_RX(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal)
+       print("BS is " + BS)
+       print("The RXi is: " + RXi)
+       print("The length of BS is: ", end='')
+       print(len(BS))
+       print("The length of RXi is: ", end ='')
+       print(len(RXi))
+       BS = BS + RXi
+       print("BS is " + BS)
+       print("The length of BS is: ", end='')
+       print(len(BS))
+       print()
+       twofiftysix = len(BS)
+    num = int(BS)
+    BS = extract_K_Bits(num,256,2)
+    print("++++++++++++++  Final BS being writ to file ++++++++++++++++++++++++")
+    print(BS)
+    print("The length of BS is: ", end='')
+    print(len(BS))
+    print()
+    
+    print("Writing to file")
+    byte = bytes(BS,"utf8")
+    byteList = []
+    file = open("ecg.bin", "wb")
+    file.write(byte)
+    file.close()
+    print("Operation Complete")
 
 if __name__ == '__main__':
     main()
