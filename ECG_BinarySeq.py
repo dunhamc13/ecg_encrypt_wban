@@ -330,7 +330,7 @@ def extract_K_Bits(num,k,p):
   
      # extract k  bit sub-string
      kBit_SubString = binaryNum[start : end+1]
-  
+     
      # convert extracted sub-string into decimal again
      return kBit_SubString
 '''
@@ -342,7 +342,7 @@ def extract_K_Bits(num,k,p):
    Return: 
 '''
 def Get_meanRX(Binary_Features, std):
-    print("=======                  Retrieving Mean BF                  =======")
+    #print("=======                  Retrieving Mean BF                  =======")
     
     #Get the average Peaks
     r = Binary_Features["R_Peak"]
@@ -384,19 +384,18 @@ def Get_meanRX(Binary_Features, std):
     Rtof = r - tof
     
     #Remove the least significant bit, only use abs log2 std to int bits
-    rr_bin = extract_K_Bits(RR,rSTD,2)
-    rro_bin = extract_K_Bits(Rro,roSTD,2)
-    rrof_bin = extract_K_Bits(Rrof,rofSTD,2)
-    rq_bin = extract_K_Bits(RQ,qSTD,2)
-    rs_bin = extract_K_Bits(RS,sSTD,2)
-    rp_bin = extract_K_Bits(RP,pSTD,2)
-    rpo_bin = extract_K_Bits(Rpo,poSTD,2)
-    rpof_bin = extract_K_Bits(Rpof,pofSTD,2)
-    rt_bin = extract_K_Bits(RT,tSTD,2)
-    rto_bin = extract_K_Bits(Rto,toSTD,2)
-    rtof_bin = extract_K_Bits(Rtof,tofSTD,2)
+    rr_bin = extract_K_Bits(abs(RR),rSTD,2)
+    rro_bin = extract_K_Bits(abs(Rro),roSTD,2)
+    rrof_bin = extract_K_Bits(abs(Rrof),rofSTD,2)
+    rq_bin = extract_K_Bits(abs(RQ),qSTD,2)
+    rs_bin = extract_K_Bits(abs(RS),sSTD,2)
+    rp_bin = extract_K_Bits(abs(RP),pSTD,2)
+    rpo_bin = extract_K_Bits(abs(Rpo),poSTD,2)
+    rpof_bin = extract_K_Bits(abs(Rpof),pofSTD,2)
+    rt_bin = extract_K_Bits(abs(RT),tSTD,2)
+    rto_bin = extract_K_Bits(abs(Rto),toSTD,2)
+    rtof_bin = extract_K_Bits(abs(Rtof),tofSTD,2)
     
-    print(type(rr_bin))
     #concatenate the bits
     meanRX = rr_bin + rro_bin + rrof_bin + rq_bin + rs_bin + rp_bin + rpo_bin + rpof_bin + rt_bin + rto_bin + rtof_bin
     return meanRX
@@ -463,7 +462,7 @@ def Get_stdRX(dwt_waves,QS_Peaks):
    Return: 
 '''
 def Get_RXi(Binary_Features, std, meanRX):
-    print("=======                  Retrieving Mean BF                  =======")
+    #print("=======                  Retrieving Mean BF                  =======")
     
     #Get the average Peaks
     r = Binary_Features["R_Peak"]
@@ -505,17 +504,17 @@ def Get_RXi(Binary_Features, std, meanRX):
     Rtof = r - tof
     
     #Remove the least significant bit, only use abs log2 std to int bits
-    rr_bin = extract_K_Bits(RR,rSTD,2)
-    rro_bin = extract_K_Bits(Rro,roSTD,2)
-    rrof_bin = extract_K_Bits(Rrof,rofSTD,2)
-    rq_bin = extract_K_Bits(RQ,qSTD,2)
-    rs_bin = extract_K_Bits(RS,sSTD,2)
-    rp_bin = extract_K_Bits(RP,pSTD,2)
-    rpo_bin = extract_K_Bits(Rpo,poSTD,2)
-    rpof_bin = extract_K_Bits(Rpof,pofSTD,2)
-    rt_bin = extract_K_Bits(RT,tSTD,2)
-    rto_bin = extract_K_Bits(Rto,toSTD,2)
-    rtof_bin = extract_K_Bits(Rtof,tofSTD,2)
+    rr_bin = extract_K_Bits(abs(RR),rSTD,2)
+    rro_bin = extract_K_Bits(abs(Rro),roSTD,2)
+    rrof_bin = extract_K_Bits(abs(Rrof),rofSTD,2)
+    rq_bin = extract_K_Bits(abs(RQ),qSTD,2)
+    rs_bin = extract_K_Bits(abs(RS),sSTD,2)
+    rp_bin = extract_K_Bits(abs(RP),pSTD,2)
+    rpo_bin = extract_K_Bits(abs(Rpo),poSTD,2)
+    rpof_bin = extract_K_Bits(abs(Rpof),pofSTD,2)
+    rt_bin = extract_K_Bits(abs(RT),tSTD,2)
+    rto_bin = extract_K_Bits(abs(Rto),toSTD,2)
+    rtof_bin = extract_K_Bits(abs(Rtof),tofSTD,2)
 
     #concatenate the bits
     RXi_Str = rr_bin + rro_bin + rrof_bin + rq_bin + rs_bin + rp_bin + rpo_bin + rpof_bin + rt_bin + rto_bin + rtof_bin
@@ -553,7 +552,7 @@ def Get_rPeak(r_peaks,BF,idx):
    Return: 
 '''
 def Get_DWTs(dwt_waves, QS_peaks,BF, i):
-    print("=======                 Getting RXi                          =======")
+    print("=======                 Getting RX" +str(i)+"                          =======")
     R_Onset = dwt_waves['ECG_R_Onsets']
     RonsMean = BF["R_Onset"]
     Rons = abs(int(R_Onset[i]) - RonsMean)
@@ -603,13 +602,53 @@ def Get_DWTs(dwt_waves, QS_peaks,BF, i):
    Return: 
 '''
 def Get_RX(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, i):
-    print("=======                   Getting RX                        ========")
+    #print("=======                   Getting RX                        ========")
     Ri = Get_rPeak(rPeaks,BF, i)
     Speak, Qpeak, Poff, Pons, Ppeak, Toff, Tons, Tpeak, Roff, Rons = Get_DWTs(waves_dwt_peak, waves_peak,BF, i)
     dictRX = {"R_Peak" : Ri,"R_Onset": Rons, "R_Offset": Roff, "T_Peak":Tpeak, "T_Onset":Tons,"T_Offset":Toff, "P_Peak":Ppeak,"P_Onset":Pons, "P_Offset":Poff,"Q_Peak":Qpeak,"S_Peak":Speak}
     RXi = Get_RXi(dictRX, stdBF, meanRX)
     return RXi
  
+'''
+   Get_BS(rPeaks, waves_dwt_peak, waves_peak))
+   This reaturns a single RX
+   Argument:
+   Return: 
+'''
+def Get_BS(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal):
+    #Now make BSx...n
+    twofiftysix = 0;
+    BS = ''
+    while twofiftysix < 258:
+       RXi = Get_RX(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal)
+       #print("BS is " + BS)
+       #print("The RXi is: " + RXi)
+       #print("The length of BS is: ", end='')
+       #print(len(BS))
+       #print("The length of RXi is: ", end ='')
+       #print(len(RXi))
+       BS = BS + RXi
+       #print("BS is " + BS)
+       #print("The length of BS is: ", end='')
+       #print(len(BS))
+       #print()
+       twofiftysix = len(BS)
+    num = int(BS)
+    BS = extract_K_Bits(num,256,2)
+    print("++++++++++++++  Final BS"+str(signal)+" being writ to file +++++++++++++++++++++++")
+    print(BS)
+    print("The length of BS is: ", end='')
+    print(len(BS))
+    print()
+    
+    print("Writing to file")
+    byte = bytes(BS,"utf8")
+    fileName = "ecg" + str(signal) + ".bin"
+    file = open(fileName, "wb")
+    file.write(byte)
+    file.flush()
+    file.close()
+    print("Operation Complete for: " + str(signal))
 
 '''
    main()
@@ -631,7 +670,7 @@ def main():
     BF, stdBF = Get_BinaryFeatures(rPeaks, waves_dwt_peak, waves_peak)
 
     #Print values
-    print("Returning Dictionaries with means and stds")
+    print("============ Returning Dictionaries with means and stds ============")
     for key in BF:
         print(key, ' Mean : ', BF[key])
     print()
@@ -644,40 +683,10 @@ def main():
     print("The meanRX is: " + meanRX)
     print("The length of meanRX is: ", end ='')
     print(len(meanRX))
-
-    #Now make BSx...n
-    twofiftysix = 0;
     signal = 1
-    BS = ''
-    while twofiftysix < 258:
-       RXi = Get_RX(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal)
-       print("BS is " + BS)
-       print("The RXi is: " + RXi)
-       print("The length of BS is: ", end='')
-       print(len(BS))
-       print("The length of RXi is: ", end ='')
-       print(len(RXi))
-       BS = BS + RXi
-       print("BS is " + BS)
-       print("The length of BS is: ", end='')
-       print(len(BS))
-       print()
-       twofiftysix = len(BS)
-    num = int(BS)
-    BS = extract_K_Bits(num,256,2)
-    print("++++++++++++++  Final BS being writ to file ++++++++++++++++++++++++")
-    print(BS)
-    print("The length of BS is: ", end='')
-    print(len(BS))
-    print()
-    
-    print("Writing to file")
-    byte = bytes(BS,"utf8")
-    byteList = []
-    file = open("ecg.bin", "wb")
-    file.write(byte)
-    file.close()
-    print("Operation Complete")
+    while signal <=10:
+       Get_BS(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal)
+       signal = signal + 1
 
 if __name__ == '__main__':
     main()
