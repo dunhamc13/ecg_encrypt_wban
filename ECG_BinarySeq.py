@@ -619,6 +619,7 @@ def Get_BS(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal):
     #Now make BSx...n
     twofiftysix = 0;
     BS = ''
+        
     while twofiftysix < 258:
        RXi = Get_RX(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal)
        #print("BS is " + BS)
@@ -633,6 +634,7 @@ def Get_BS(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal):
        #print(len(BS))
        #print()
        twofiftysix = len(BS)
+        
     num = int(BS)
     BS = extract_K_Bits(num,256,2)
     print("++++++++++++++  Final BS"+str(signal)+" being writ to file +++++++++++++++++++++++")
