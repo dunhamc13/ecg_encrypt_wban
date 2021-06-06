@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import math
+import time
 #%matplotlib inline   //use this if in jupyter notebook
 #plt.rcParams['figure.figsize'] = [8,5]
 
@@ -504,17 +505,17 @@ def Get_RXi(Binary_Features, std, meanRX):
     Rtof = r - tof
     
     #Remove the least significant bit, only use abs log2 std to int bits
-    rr_bin = extract_K_Bits(abs(RR),rSTD,2)
-    rro_bin = extract_K_Bits(abs(Rro),roSTD,2)
-    rrof_bin = extract_K_Bits(abs(Rrof),rofSTD,2)
-    rq_bin = extract_K_Bits(abs(RQ),qSTD,2)
-    rs_bin = extract_K_Bits(abs(RS),sSTD,2)
-    rp_bin = extract_K_Bits(abs(RP),pSTD,2)
-    rpo_bin = extract_K_Bits(abs(Rpo),poSTD,2)
-    rpof_bin = extract_K_Bits(abs(Rpof),pofSTD,2)
-    rt_bin = extract_K_Bits(abs(RT),tSTD,2)
-    rto_bin = extract_K_Bits(abs(Rto),toSTD,2)
-    rtof_bin = extract_K_Bits(abs(Rtof),tofSTD,2)
+    rr_bin = extract_K_Bits(abs(RR),rSTD*10,2)
+    rro_bin = extract_K_Bits(abs(Rro),roSTD*10,2)
+    rrof_bin = extract_K_Bits(abs(Rrof),rofSTD*10,2)
+    rq_bin = extract_K_Bits(abs(RQ),qSTD*10,2)
+    rs_bin = extract_K_Bits(abs(RS),sSTD*10,2)
+    rp_bin = extract_K_Bits(abs(RP),pSTD*10,2)
+    rpo_bin = extract_K_Bits(abs(Rpo),poSTD*10,2)
+    rpof_bin = extract_K_Bits(abs(Rpof),pofSTD*10,2)
+    rt_bin = extract_K_Bits(abs(RT),tSTD*10,2)
+    rto_bin = extract_K_Bits(abs(Rto),toSTD*10,2)
+    rtof_bin = extract_K_Bits(abs(Rtof),tofSTD*10,2)
 
     #concatenate the bits
     RXi_Str = rr_bin + rro_bin + rrof_bin + rq_bin + rs_bin + rp_bin + rpo_bin + rpof_bin + rt_bin + rto_bin + rtof_bin
@@ -620,7 +621,7 @@ def Get_BS(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal):
     twofiftysix = 0;
     BS = ''
         
-    while twofiftysix < 258:
+    while twofiftysix < 130:
        RXi = Get_RX(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal)
        #print("BS is " + BS)
        #print("The RXi is: " + RXi)
@@ -636,7 +637,7 @@ def Get_BS(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal):
        twofiftysix = len(BS)
         
     num = int(BS)
-    BS = extract_K_Bits(num,256,2)
+    BS = extract_K_Bits(num,128,2)
     print("++++++++++++++  Final BS"+str(signal)+" being writ to file +++++++++++++++++++++++")
     print(BS)
     print("The length of BS is: ", end='')
@@ -687,8 +688,12 @@ def main():
     print(len(meanRX))
     signal = 1
     while signal <=10:
-       Get_BS(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal)
-       signal = signal + 1
+        tic = time.perf_counter()
+        Get_BS(rPeaks, waves_dwt_peak, waves_peak, stdBF, meanRX, BF, signal)
+        toc = time.perf_counter()
+        print(f"Computation Time for BS creation is {toc - tic:0.4f} seconds")
+        signal = signal + 1
+
 
 if __name__ == '__main__':
     main()
